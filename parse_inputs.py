@@ -7,6 +7,7 @@ from oauth2client import client
 from oauth2client import tools
 
 import datetime
+from datetime import date
 
 try:
     import argparse
@@ -18,92 +19,74 @@ SCOPES = 'https://www.googleapis.com/auth/calendar'
 CLIENT_SECRET_FILE = 'client_secret.json'
 APPLICATION_NAME = 'NuSTAR Calendar'
 
-def read_obs_log();
+
+obs_time_start = {}
+obs_time_end = {}
+obs_name = {}
+
+def read_obs_log( obs_time_start, obs_time_end, obs_name ):
+    #global obs_time_start obs_time_end # obs_name
     """ Reads in the observation log """
     obsfile="observing_schedule.txt"
-    
+    with open(obsfile, 'r') as f:
+        # do things with your file
+        for line in f:
+            fields = line.split()
+            if fields[0].startswith(';'):
+                continue
+            obsid=fields[2]
+            obs_time_start[obsid]=fields[0]
+            obs_time_end[obsid]=fields[1]
+            obs_name[obsid]=fields[3]
 
-def get_credentials():
-    """Gets valid user credentials from storage.
-
-    If nothing has been stored, or if the stored credentials are invalid,
-    the OAuth2 flow is completed to obtain the new credentials.
-
-    Returns:
-        Credentials, the obtained credential.
-    """
-    home_dir = os.path.expanduser('~')
-    credential_dir = os.path.join(home_dir, '.credentials')
-    if not os.path.exists(credential_dir):
-        os.makedirs(credential_dir)
-    credential_path = os.path.join(credential_dir,
-                                   'calendar-quickstart.json')
-
-    store = oauth2client.file.Storage(credential_path)
-    credentials = store.get()
-    if not credentials or credentials.invalid:
-        flow = client.flow_from_clientsecrets(CLIENT_SECRET_FILE, SCOPES)
-        flow.user_agent = APPLICATION_NAME
-        if flags:
-            credentials = tools.run_flow(flow, store, flags)
-        else: # Needed only for compatability with Python 2.6
-            credentials = tools.run(flow, store)
-        print 'Storing credentials to ' + credential_path
-    return credentials
 
 def main():
-    """Shows basic usage of the Google Calendar API.
+    #    global obs_time_start obs_time_end
+    read_obs_log(obs_time_start,obs_time_end,obs_name)
 
-    Creates a Google Calendar API service object and outputs a list of the next
-    10 events on the user's calendar.
-    """
-    credentials = get_credentials()
-    http = credentials.authorize(httplib2.Http())
-    service = discovery.build('calendar', 'v3', http=http)
+    base_epoch=datetime.datetime(2011, 1, 1)
 
-    now = datetime.datetime.utcnow().isoformat() + 'Z' # 'Z' indicates UTC time
+    for obsid in obs_time_start:
+# Convert the time to normal units:
+        [year, days, hr, minutes, sec] = obs_time_start[obsid].split(":")
+        utc_date = date.fromordinal(date(int(year), 1, 1).toordinal() + int(days) - 1)
+        month = utc_date.month
+        day = utc_date.day
+
+        utc_date = datetime.datetime(int(year), int(month), int(day), int(hr), int(minutes), int(sec))
+
+        this_dt = utc_date - base_epoch
+        dt[obsid]= this_dt.days * 865400. + this_dt.seconds
+        utc_start = utc_date.strftime('%Y-%m-%dT%H:%M:%S')
 
 
-# Calendar ID is NuSTAR Observations
-    obs_cal_id='oaej5g959eckmgjctggjicdq7g@group.calendar.google.com'
-    created_event = service.events().quickAdd(
-                                              calendarId=obs_cal_id,
-                                              text='Appointment at Somewhere on June 3rd 10am-10:25am').execute()
+     sort_inds = sorted(range(len(s)), key=lambda k: s[k])
 
-    ev_id = created_event['id']
 
-    page_token = None
-    while True:
-        events = service.events().list(calendarId=obs_cal_id, pageToken=page_token).execute()
-        for event in events['items']:
-            print event['summary']
-            print event['id']
-        page_token = events.get('nextPageToken')
-        if not page_token:
-            break
 
-#    page_token = None
-#    while True:
-#      calendar_list = service.calendarList().list(pageToken=page_token).execute()
-#      for calendar_list_entry in calendar_list['items']:
-#        print calendar_list_entry['summary']
-#        print calendar_list_entry['id']
-#      page_token = calendar_list.get('nextPageToken')
-#      if not page_token:
+
+
+
+#        dt = utc_date - base_epoch
+#        print dt.
 #        break
 
-#    print 'Getting the upcoming 10 events'
-#    eventsResult = service.events().list(
-#        calendarId='primary', timeMin=now, maxResults=10, singleEvents=True,
-#        orderBy='startTime').execute()
+#        [year, days, hr, min, sec] = obs_time_end[obsid].split(":")
+#        utc_date = date.fromordinal(date(int(year), 1, 1).toordinal() + int(days) - 1)
+#        utc_end = utc_date.strftime('%Y-%m-%d') + "T"+ hr + ':' + min + ':'+sec
 #
-#    events = eventsResult.get('items', [])
-#
-#    if not events:
-#        print 'No upcoming events found.'
-#    for event in events:
-#        start = event['start'].get('dateTime', event['start'].get('date'))
-#        print start, event['summary']
+#        event = {
+#            "id": obsid,
+#            "summary": obs_name[obsid],
+#            "start": {
+#                "dateTime": utc_start,
+#                "timeZone": "UTC"
+#            },
+#            "end": {
+#                "dateTime": utc_end,
+#                "timeZone": "UTC"
+#            }
+#        }
 
 
 if __name__ == '__main__':

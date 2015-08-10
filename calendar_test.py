@@ -58,17 +58,48 @@ def main():
     service = discovery.build('calendar', 'v3', http=http)
 
     now = datetime.datetime.utcnow().isoformat() + 'Z' # 'Z' indicates UTC time
-    print 'Getting the upcoming 10 events'
-    eventsResult = service.events().list(
-        calendarId='primary', timeMin=now, maxResults=10, singleEvents=True,
-        orderBy='startTime').execute()
-    events = eventsResult.get('items', [])
 
-    if not events:
-        print 'No upcoming events found.'
-    for event in events:
-        start = event['start'].get('dateTime', event['start'].get('date'))
-        print start, event['summary']
+
+# Calendar ID is NuSTAR Observations
+    obs_cal_id='oaej5g959eckmgjctggjicdq7g@group.calendar.google.com'
+    created_event = service.events().quickAdd(
+                                              calendarId=obs_cal_id,
+                                              text='Appointment at Somewhere on June 3rd 10am-10:25am').execute()
+
+    ev_id = created_event['id']
+
+    page_token = None
+    while True:
+        events = service.events().list(calendarId=obs_cal_id, pageToken=page_token).execute()
+        for event in events['items']:
+            print event['summary']
+            print event['id']
+        page_token = events.get('nextPageToken')
+        if not page_token:
+            break
+
+#    page_token = None
+#    while True:
+#      calendar_list = service.calendarList().list(pageToken=page_token).execute()
+#      for calendar_list_entry in calendar_list['items']:
+#        print calendar_list_entry['summary']
+#        print calendar_list_entry['id']
+#      page_token = calendar_list.get('nextPageToken')
+#      if not page_token:
+#        break
+
+#    print 'Getting the upcoming 10 events'
+#    eventsResult = service.events().list(
+#        calendarId='primary', timeMin=now, maxResults=10, singleEvents=True,
+#        orderBy='startTime').execute()
+#
+#    events = eventsResult.get('items', [])
+#
+#    if not events:
+#        print 'No upcoming events found.'
+#    for event in events:
+#        start = event['start'].get('dateTime', event['start'].get('date'))
+#        print start, event['summary']
 
 
 if __name__ == '__main__':
