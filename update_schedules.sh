@@ -1,0 +1,1 @@
+ curl -u nusoc -O "http://www.srl.caltech.edu/NuSTAR_Public/NuSTAROperationSite/Operations/{qa,observing}_schedule.txt"
