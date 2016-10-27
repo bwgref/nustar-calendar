@@ -85,7 +85,7 @@ def cleanup_calendar(limitdays):
             eventId=event['id']).execute()
             
 def populate_calendar(limit):
-    
+
     now = datetime.datetime.utcnow()
 
     f = open('observing_schedule.txt', 'r')
@@ -120,6 +120,6 @@ print("Updating calendar.")
 credentials = get_credentials()
 http = credentials.authorize(httplib2.Http())
 service = discovery.build('calendar', 'v3', http=http)
-cleanup_calendar(11)
-populate_calendar(10)
+cleanup_calendar(15)
+populate_calendar(14)
 
