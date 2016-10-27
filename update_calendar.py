@@ -109,9 +109,26 @@ def populate_calendar(limit):
 
 
 
-credentials = get_credentials()
-http = credentials.authorize(httplib2.Http())
-service = discovery.build('calendar', 'v3', http=http)
-cleanup_calendar(10)
-populate_calendar(10)
+import os
+
+old_filename = "observing_old_schedule.txt"
+new_filename= "observing_schedule.txt"
+
+statbuf = os.stat(old_filename)
+print("Modification time:",statbuf.st_mtime)
+oldmtime = statbuf.st_mtime
+statbuf = os.stat(new_filename)
+print("Modification time:",statbuf.st_mtime)
+dt = statbuf.st_mtime - oldmtime
+print("Difference:", dt)
+
+if (dt < 5):
+	print("No need to update calendar.")
+else:
+	print("Updating calendar.")
+	credentials = get_credentials()
+	http = credentials.authorize(httplib2.Http())
+	service = discovery.build('calendar', 'v3', http=http)
+	cleanup_calendar(10)
+	populate_calendar(10)
 	

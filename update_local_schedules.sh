@@ -1,1 +1,0 @@
-cp /home/nustar1/Web/NuSTAROperationSite/Operations/{qa,observing}_schedule.txt .
