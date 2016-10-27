@@ -14,7 +14,6 @@ else
     curl -Rs --netrc-file nusoc_password.txt -O "http://www.srl.caltech.edu/NuSTAR_Public/NuSTAROperationSite/Operations/observing_schedule.txt"
 fi
 
-touch observing_schedule.txt
 
 if test observing_schedule.txt -nt observing_old_schedule.txt; then
     echo "New schedule found." > cal.log
