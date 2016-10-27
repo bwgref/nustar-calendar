@@ -40,10 +40,10 @@ def get_credentials():
     if not credentials or credentials.invalid:
         flow = client.flow_from_clientsecrets(CLIENT_SECRET_FILE, SCOPES)
         flow.user_agent = APPLICATION_NAME
-        if flags:
-            credentials = tools.run_flow(flow, store, flags)
-        else: # Needed only for compatability with Python 2.6
-            credentials = tools.run(flow, store)
+
+        credentials = tools.run_flow(flow, store, flags)
+#        else: # Needed only for compatability with Python 2.6
+#            credentials = tools.run(flow, store)
         print('Storing credentials to ' + credential_path)
     return credentials
     
@@ -70,6 +70,7 @@ def cleanup_calendar(limitdays):
     print('Removing the previous '+str(limitdays)+' days')
     eventsResult = service.events().list(
         calendarId='primary', timeMin=limstr, singleEvents=True,
+        maxResults=2000,
         orderBy='startTime').execute()
     events = eventsResult.get('items', [])
 
@@ -114,21 +115,11 @@ import os
 old_filename = "observing_old_schedule.txt"
 new_filename= "observing_schedule.txt"
 
-statbuf = os.stat(old_filename)
-print("Modification time:",statbuf.st_mtime)
-oldmtime = statbuf.st_mtime
-statbuf = os.stat(new_filename)
-print("Modification time:",statbuf.st_mtime)
-dt = statbuf.st_mtime - oldmtime
-print("Difference:", dt)
 
-if (dt < 5):
-	print("No need to update calendar.")
-else:
-	print("Updating calendar.")
-	credentials = get_credentials()
-	http = credentials.authorize(httplib2.Http())
-	service = discovery.build('calendar', 'v3', http=http)
-	cleanup_calendar(10)
-	populate_calendar(10)
-	
+print("Updating calendar.")
+credentials = get_credentials()
+http = credentials.authorize(httplib2.Http())
+service = discovery.build('calendar', 'v3', http=http)
+cleanup_calendar(11)
+populate_calendar(10)
+
