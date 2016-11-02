@@ -69,7 +69,7 @@ def cleanup_calendar(limitdays):
     
     print('Removing the previous '+str(limitdays)+' days')
     eventsResult = service.events().list(
-        calendarId='primary', timeMin=limstr, singleEvents=True,
+        calendarId='primary',timeZone='GMT', timeMin=limstr, singleEvents=True,
         maxResults=2000,
         orderBy='startTime').execute()
     events = eventsResult.get('items', [])
@@ -78,6 +78,18 @@ def cleanup_calendar(limitdays):
         print('No upcoming events found.')
     for event in events:
         start = event['start'].get('dateTime', event['start'].get('date'))
+        dtm = start
+        dtm_spl = dtm.split('T')
+#        print(dtm_spl)
+
+        date = dtm_spl[0].split('-')
+        time_fields = dtm_spl[1].split('-')
+        time = time_fields[0].split(':')
+        start_time = datetime.datetime.strptime(date[0]+' ' +date[1]+' '+date[2]+' '+time[0]+' '+time[1]+' '+time[2][:2], '%Y %m %d %H %M %S')
+        if (now - start_time).days > abs(limitdays):
+            continue
+
+
         print('Removing: ',start, event['summary'])
 
         service.events().delete(
