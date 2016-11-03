@@ -3,6 +3,8 @@
 export PATH=/disk/lif2/bwgref/miniconda3/bin:$PATH
 export PATH=/disk/lif2/bwgref/miniconda3/bin:$PATH
 
+cd /disk/lif2/bwgref/git/nustar-calendar
+
 cp -p observing_schedule.txt observing_old_schedule.txt
 
 
