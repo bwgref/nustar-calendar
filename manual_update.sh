@@ -24,7 +24,7 @@ fi
 
 #if test observing_schedule.txt -nt observing_old_schedule.txt; then
 #    echo "New schedule found." > cal.log
-python update_calendar.py >> cal.log    
+python update_calendar.py #>> cal.log    
 #    ./push_slack.sh cal.log >> /dev/null
 #fi
 #else

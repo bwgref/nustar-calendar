@@ -132,6 +132,6 @@ print("Updating calendar.")
 credentials = get_credentials()
 http = credentials.authorize(httplib2.Http())
 service = discovery.build('calendar', 'v3', http=http)
-cleanup_calendar(15)
+cleanup_calendar(14)
 populate_calendar(14)
 
