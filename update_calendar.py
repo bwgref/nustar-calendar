@@ -179,9 +179,15 @@ def populate_calendar(limit):
         seqid = fields[2]
         seqname=fields[3]
 
-        print('Adding: ', start_time.isoformat()+'Z', end_time.isoformat()+'Z', seqid+' '+seqname)
-        add_event(start_time.isoformat()+'Z', end_time.isoformat()+'Z', seqid+' '+seqname)
+        coords = line.find('[')
+        qa_start = line.find('[', coords+1)
+        qa_person=''
+        if(qa_start != -1):
+            qa_end =  line.find(']', qa_start)
+            qa_person = line[qa_start+1:qa_end]
 
+        print('Adding: ', start_time.isoformat()+'Z', end_time.isoformat()+'Z', seqid+' '+seqname+' ('+qa_person+')')
+        add_event(start_time.isoformat()+'Z', end_time.isoformat()+'Z', seqid+' '+seqname+' ('+qa_person+')')
 
 
 def parse_aft(infile='observing_schedule.txt', limit = 20):
