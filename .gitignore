@@ -4,3 +4,5 @@ nusoc_password.txt
 *log
 .credentials/
 *~
+.ipynb*
+__pycache__
