@@ -85,6 +85,8 @@ def add_new_events(service, events, aft):
             print('Adding {}'.format(rowid))
             starttime = row.StartTime.to_pydatetime()
             endtime = row.EndTime.to_pydatetime()
+            if ( (endtime - starttime).total_seconds() < 0):
+                continue
             summary = rowid +' '+row.Target
             add_event(service, starttime.isoformat()+'Z', endtime.isoformat()+'Z', summary)
                 
