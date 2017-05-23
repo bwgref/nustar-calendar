@@ -12,6 +12,7 @@ import datetime
 from datetime import datetime
 import pandas as pd
 
+import time
 
 flags = None
 
@@ -54,12 +55,44 @@ def add_event(service, start, stop, name):
         calendarId='primary',
         text=name
         ).execute()
+        
     eventadd['start']['dateTime']=start
     eventadd['end']['dateTime'] = stop
     updateEvent = service.events().update(
         calendarId='primary',eventId=eventadd['id'],
         body=eventadd
     ).execute()
+    return
+
+def add_event_quick(service, start, stop, name):
+
+    obj = {"start" : 
+                {"dateTime" : "" },
+            "end" :
+                {"dateTime" : "" },
+            "summary" : ""
+            }
+            
+            
+    obj['start']['dateTime']=start
+    obj['end']['dateTime']=stop
+    obj['summary']=name
+
+    eventadd = service.events().insert(
+        calendarId='primary',
+        body=obj
+        ).execute()
+
+#     eventadd = service.events().quickAdd(
+#         calendarId='primary',
+#         text=name
+#         ).execute()
+#     eventadd['start']['dateTime']=start
+#     eventadd['end']['dateTime'] = stop
+#     updateEvent = service.events().update(
+#         calendarId='primary',eventId=eventadd['id'],
+#         body=eventadd
+#     ).execute()
     return
     
     
@@ -72,61 +105,34 @@ def add_new_events(service, events, aft):
     
     for row in aft.itertuples():
         rowid = row.SequenceID
-        # Check to see if you're already in the events
-        match = False
-
+#        print(rowid)
+        
+        found = False
         for event in events:
-            obsid = (event['summary'].split())[0]
-            if obsid == rowid:
-                match = True
-        if match:
-            continue
-        else:
+            teststr=event['summary']
+            if (teststr.startswith(rowid)):
+                found = True
+                break
+            
+        if not found:
             print('Adding {}'.format(rowid))
+            print(row.StartTime)
             starttime = row.StartTime.to_pydatetime()
             endtime = row.EndTime.to_pydatetime()
-            if ( (endtime - starttime).total_seconds() < 0):
-                continue
             summary = rowid +' '+row.Target
-            add_event(service, starttime.isoformat()+'Z', endtime.isoformat()+'Z', summary)
-                
-# Defunct
-def cleanup_calendar(limitdays):
 
-    now = datetime.datetime.utcnow()
-    limit = (now + datetime.timedelta(-limitdays))
-    limstr = limit.isoformat()+'Z'
+            if ( (endtime - starttime).total_seconds() < 0):
+                print("Problem!")
+                print(summary)
+                continue
+
+            add_event_quick(service,
+                starttime.isoformat()+'Z',
+                endtime.isoformat()+'Z',
+                summary)
+
+    return 
     
-    
-    print('Removing the previous '+str(limitdays)+' days')
-    eventsResult = service.events().list(
-        calendarId='primary',timeZone='GMT', timeMin=limstr, singleEvents=True,
-        maxResults=2000,
-        orderBy='startTime').execute()
-    events = eventsResult.get('items', [])
-
-    if not events:
-        print('No upcoming events found.')
-    for event in events:
-        start = event['start'].get('dateTime', event['start'].get('date'))
-        dtm = start
-        dtm_spl = dtm.split('T')
-
-        date = dtm_spl[0].split('-')
-        time_fields = dtm_spl[1].split('-')
-        time = time_fields[0].split(':')
-        start_time = datetime.datetime.strptime(date[0]+' ' +date[1]+' '+date[2]+' '+ \
-            time[0]+' '+time[1]+' '+time[2][:2], '%Y %m %d %H %M %S')
-        if (now - start_time).days > abs(limitdays):
-            continue
-
-        print('Removing: ',start, event['summary'])
-
-        service.events().delete(
-            calendarId='primary',
-            eventId=event['id']).execute()
- 
-
 
 def remove_all_events(service, events):
     '''Convenience function to completely erase a calendar.
@@ -148,48 +154,28 @@ def get_all_events(service):
     Returns Google-formatted "events" object.
     
     '''
-    eventsResult = service.events().list(
-    calendarId='primary',timeZone='GMT', singleEvents=True,
-    maxResults=200000,
-    orderBy='startTime').execute()
-    events = eventsResult.get('items', [])
-    return events
+    all_events = []
 
+    pageToken = None
+    ind = 0
+    while(True):
+        eventsResult = service.events().list(
+            calendarId='primary',timeZone='GMT',
+            maxResults=2500, 
+            singleEvents=True,
+            orderBy='startTime',
+            pageToken=pageToken).execute()
+        
+            
+        events = eventsResult.get('items', [])
+        all_events.extend(events)
 
- 
-# Defunct
-def populate_calendar(limit):
-
-    now = datetime.datetime.utcnow()
-    
-    f = open('observing_schedule.txt', 'r')
-    for line in f:
-        if line.startswith(";"):
-            continue
-        fields = line.split()
-
-        dtm = fields[0].split(':')
-        start_time = datetime.datetime.strptime(dtm[0]+' ' +dtm[1]+' '+dtm[2]+' '+ \
-            dtm[3]+' '+dtm[4], '%Y %j %H %M %S')
-
-        dtm = fields[1].split(':')
-        end_time = datetime.datetime.strptime(dtm[0]+' ' +dtm[1]+' '+dtm[2]+' '+ \
-            dtm[3]+' '+dtm[4], '%Y %j %H %M %S')
-
-        if (now - start_time).days > abs(limit):
+        try:
+            pageToken=eventsResult['nextPageToken']
+        except:
             break
-        seqid = fields[2]
-        seqname=fields[3]
 
-        coords = line.find('[')
-        qa_start = line.find('[', coords+1)
-        qa_person=''
-        if(qa_start != -1):
-            qa_end =  line.find(']', qa_start)
-            qa_person = line[qa_start+1:qa_end]
-
-        print('Adding: ', start_time.isoformat()+'Z', end_time.isoformat()+'Z', seqid+' '+seqname+' ('+qa_person+')')
-        add_event(start_time.isoformat()+'Z', end_time.isoformat()+'Z', seqid+' '+seqname+' ('+qa_person+')')
+    return all_events
 
 
 def parse_aft(infile='observing_schedule.txt', limit = 20):
@@ -253,6 +239,32 @@ def clean_stale_events(service, events, aft):
                 eventId=event['id']).execute()
     return
 
+
+def remove_duplicates(service, events, aft):
+    '''Remove any duplicate events
+
+    '''
+    
+    for row in aft.itertuples():
+        rowid = row.SequenceID
+        # Check to see if you're already in the events
+#        print(rowid)
+         
+        # Query the calendar to see if how many entries match this one
+        eventsResult = service.events().list(calendarId='primary', q=rowid).execute()
+
+        found_events = eventsResult.get('items', [])
+
+        for ind2, found_event in enumerate(found_events):
+            if ind2 == 0:
+                continue
+            else:
+                print('Removing one:')
+                print(found_event)
+                service.events().delete(
+                    calendarId='primary',
+                    eventId=found_event['id']).execute()
+    return
 
 def init_service():
     '''Wrapper script to set up the Google credentials.
