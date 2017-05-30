@@ -115,11 +115,13 @@ def add_new_events(service, events, aft):
                 break
             
         if not found:
-            print('Adding {}'.format(rowid))
-            print(row.StartTime)
+
+
             starttime = row.StartTime.to_pydatetime()
             endtime = row.EndTime.to_pydatetime()
             summary = rowid +' '+row.Target
+            print('Adding {}'.format(summary))
+            print(row.StartTime)
 
             if ( (endtime - starttime).total_seconds() < 0):
                 print("Problem!")
