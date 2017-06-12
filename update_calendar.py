@@ -234,7 +234,7 @@ def clean_stale_events(service, events, aft):
         # Check to see if this exists in the AFT:
         match = aft.loc[aft['SequenceID'] == obsid]
         if len(match) == 0 :
-            print('Removing: ',start, event['summary'])
+            print('Removing: ',obsid, event['summary'])
 
             service.events().delete(
                 calendarId='primary',
