@@ -198,7 +198,6 @@ def parse_aft(infile='observing_schedule.txt', limit = 20):
     for line in f:
         if line.startswith(";"):
             continue
-        print(line)
         fields = line.split()
         
         if len(fields) == 0:
