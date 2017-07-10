@@ -198,8 +198,11 @@ def parse_aft(infile='observing_schedule.txt', limit = 20):
     for line in f:
         if line.startswith(";"):
             continue
+        print(line)
         fields = line.split()
-
+        
+        if len(fields) == 0:
+            continue
         dtm = fields[0].split(':')
         start_time.extend([datetime.strptime(dtm[0]+' ' +dtm[1]+' '+dtm[2]+' '+ \
             dtm[3]+' '+dtm[4], '%Y %j %H %M %S')])
